@@ -1,0 +1,84 @@
+{
+  "created_at_utc": "2026-10-10T20:12:37.208789+00:00",
+  "data_dir": "/workspaces/campivargas07-Tutorial-de-Clasficador-de-Imagenesmachine-learning-python-template/data/raw/dogs-vs-cats/train",
+  "num_images_usable": 25000,
+  "class_counts": {
+    "cat": 12500,
+    "dog": 12500
+  },
+  "dimensions_top_10": [
+    [
+      "500x374",
+      2955
+    ],
+    [
+      "499x375",
+      2912
+    ],
+    [
+      "375x499",
+      261
+    ],
+    [
+      "499x333",
+      229
+    ],
+    [
+      "374x500",
+      227
+    ],
+    [
+      "319x240",
+      207
+    ],
+    [
+      "500x332",
+      200
+    ],
+    [
+      "320x239",
+      192
+    ],
+    [
+      "500x373",
+      101
+    ],
+    [
+      "500x331",
+      95
+    ]
+  ],
+  "image_modes": {
+    "RGB": 25000
+  },
+  "unique_sha256": 24994,
+  "duplicate_groups": 5,
+  "duplicate_files_beyond_first": 6,
+  "excluded_count": 0,
+  "excluded_files": [],
+  "class_to_index": {
+    "cat": 0,
+    "dog": 1
+  },
+  "split_ratios": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "seed": 42,
+  "split_counts": {
+    "train": {
+      "cat": 8750,
+      "dog": 8750
+    },
+    "validation": {
+      "cat": 1875,
+      "dog": 1875
+    },
+    "test": {
+      "cat": 1875,
+      "dog": 1875
+    }
+  },
+  "manifest": "/workspaces/campivargas07-Tutorial-de-Clasficador-de-Imagenesmachine-learning-python-template/data/processed/splits.csv"
+}

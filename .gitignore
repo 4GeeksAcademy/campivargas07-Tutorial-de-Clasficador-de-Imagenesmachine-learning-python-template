@@ -1,3 +1,14 @@
 __pycache__
 .env
 .learn
+
+# Dataset original y artefactos grandes/derivados; los informes se pueden versionar.
+data/raw/
+models/*.keras
+models/*.weights.h5
+models/*.h5
+models/*.tflite
+models/*.pb
+models/variables/
+models/assets/
+models/saved_model/

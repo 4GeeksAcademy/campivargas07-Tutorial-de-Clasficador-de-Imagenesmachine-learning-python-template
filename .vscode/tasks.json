@@ -1,0 +1,23 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run dog-cat model training",
+			"type": "shell",
+			"command": "/workspaces/campivargas07-Tutorial-de-Clasficador-de-Imagenesmachine-learning-python-template/.venv/bin/python",
+			"args": [
+				"src/app.py",
+				"train",
+				"--batch-size",
+				"16",
+				"--epochs",
+				"30",
+				"--seed",
+				"42"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

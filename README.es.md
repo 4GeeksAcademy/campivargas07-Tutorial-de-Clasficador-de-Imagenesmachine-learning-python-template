@@ -1,112 +1,56 @@
-# Plantilla de Proyecto de Ciencia de Datos
+# Clasificador de gatos y perros con EfficientNetB0
 
-Esta plantilla está diseñada para impulsar proyectos de ciencia de datos proporcionando una configuración básica para conexiones de base de datos, procesamiento de datos, y desarrollo de modelos de aprendizaje automático. Incluye una organización estructurada de carpetas para tus conjuntos de datos y un conjunto de paquetes de Python predefinidos necesarios para la mayoría de las tareas de ciencia de datos.
+Proyecto reproducible en español para auditar el conjunto de imágenes, explorar sus características y entrenar un clasificador binario con TensorFlow/Keras. El modelo usa **EfficientNetB0 sin pesos preentrenados**, con el backbone entrenable desde el inicio, entradas RGB de **200 × 200** y dos salidas softmax.
 
-## Estructura
+## Datos y procedencia
 
-El proyecto está organizado de la siguiente manera:
+Coloca las imágenes etiquetadas localmente en `data/raw/dogs-vs-cats/train/`, con nombres `cat.<id>.jpg` o `dog.<id>.jpg`. El directorio raw está excluido de Git porque contiene datos voluminosos y/o sujetos a licencias. Este repositorio no descarga datos automáticamente. La página de la competición original es [Kaggle Dogs vs. Cats](https://www.kaggle.com/competitions/dogs-vs-cats/data); la descarga puede requerir cuenta y aceptación de reglas.
 
-- **`src/app.py`** → Script principal de Python donde correrá tu proyecto.
-- **`src/explore.ipynb`** → Notebook para exploración y pruebas. Una vez finalizada la exploración, migra el código limpio a `app.py`.
-- **`src/utils.py`** → Funciones auxiliares, como conexión a bases de datos.
-- **`requirements.txt`** → Lista de paquetes de Python necesarios.
-- **`models/`** → Contendrá tus clases de modelos SQLAlchemy.
-- **`data/`** → Almacena los datasets en diferentes etapas:
-  - **`data/raw/`** → Datos sin procesar.
-  - **`data/interim/`** → Datos transformados temporalmente.
-  - **`data/processed/`** → Datos listos para análisis.
+La auditoría local detecta nombres desconocidos, archivos no decodificables, tamaños/modos, hashes SHA-256 y duplicados exactos. Genera `data/processed/splits.csv`, `audit.json` y `excluded_files.csv`. El manifiesto usa semilla 42, asignación aproximadamente estratificada 70/15/15, clases explícitas `cat=0` y `dog=1`, y agrupa duplicados SHA-256 para evitar que la misma imagen cruce particiones. Si cambias el dataset, vuelve a ejecutar la auditoría.
 
+## Entorno
 
-## ⚡ Configuración Inicial en Codespaces (Recomendado)
-
-No es necesario realizar ninguna configuración manual, ya que **Codespaces se configura automáticamente** con los archivos predefinidos que ha creado la academia para ti. Simplemente sigue estos pasos:
-
-1. **Espera a que el entorno se configure automáticamente**.
-   - Todos los paquetes necesarios y la base de datos se instalarán por sí mismos.
-   - El `username` y `db_name` creados automáticamente están en el archivo **`.env`** en la raíz del proyecto.
-2. **Una vez que Codespaces esté listo, puedes comenzar a trabajar inmediatamente**.
-
-
-## 💻 Configuración en Local (Solo si no puedes usar Codespaces)
-
-**Prerrequisitos**
-
-Asegúrate de tener Python 3.11+ instalado en tu máquina. También necesitarás pip para instalar los paquetes de Python.
-
-**Instalación**
-
-Clona el repositorio del proyecto en tu máquina local.
-
-Navega hasta el directorio del proyecto e instala los paquetes de Python requeridos:
+Se verificó con Python 3.13 y TensorFlow 2.20.0 en CPU. Se recomienda entorno virtual:
 
 ```bash
-pip install -r requirements.txt
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-**Crear una base de datos (si es necesario)**
+TensorFlow 2.20.0 está fijado para reproducibilidad y compatibilidad con el Python observado. Un backend GPU no es requisito, pero entrenar el modelo completo en CPU puede tomar bastante tiempo; no reduzcas la arquitectura ni reportes una corrida abreviada como resultado final.
 
-Crea una nueva base de datos dentro del motor Postgres personalizando y ejecutando el siguiente comando: 
+## Flujo
+
+Desde la raíz del repositorio:
 
 ```bash
-$ psql -U postgres -c "DO \$\$ BEGIN 
-    CREATE USER mi_usuario WITH PASSWORD 'mi_contraseña'; 
-    CREATE DATABASE mi_base_de_datos OWNER mi_usuario; 
-END \$\$;"
-```
-Conéctate al motor Postgres para usar tu base de datos, manipular tablas y datos: 
+# Auditar, deduplicar por grupo y crear las particiones reproducibles
+python src/app.py audit
 
-```bash
-$ psql -U mi_usuario -d mi_base_de_datos
-```
+# Ejecutar el EDA reproducible, con salidas almacenadas en el notebook
+# (abrir src/explore.ipynb en Jupyter/VS Code y ejecutar todas las celdas)
 
-¡Una vez que estés dentro de PSQL podrás crear tablas, hacer consultas, insertar, actualizar o eliminar datos y mucho más!
+# Entrenar con validación para selección y test reservado para evaluación final
+python src/app.py train --batch-size 16 --epochs 30 --seed 42
 
-**Variables de entorno**
-
-Crea un archivo .env en el directorio raíz del proyecto para almacenar tus variables de entorno, como tu cadena de conexión a la base de datos:
-
-```makefile
-DATABASE_URL="postgresql://<USUARIO>:<CONTRASEÑA>@<HOST>:<PUERTO>/<NOMBRE_BD>"
-
-#example
-DATABASE_URL="postgresql://mi_usuario:mi_contraseña@localhost:5432/mi_base_de_datos"
+# Inferencia de una imagen
+python src/app.py predict data/raw/dogs-vs-cats/train/cat.0.jpg
 ```
 
-## Ejecutando la Aplicación
+También existe la tarea de VS Code **Run dog-cat model training**. El entrenamiento puede tardar muchas horas en CPU; usa GPU compatible cuando esté disponible o lanza el comando en una sesión persistente y supervisada.
 
-Para ejecutar la aplicación, ejecuta el script app.py desde la raíz del directorio del proyecto:
+La arquitectura es `EfficientNetB0(include_top=False, weights=None, input_shape=(200, 200, 3))`, backbone entrenable, `GlobalAveragePooling2D`, `Dense(128, relu)` y `Dense(2, softmax)`. Usa etiquetas enteras y `sparse_categorical_crossentropy`. La augmentación aleatoria está integrada solo en la ruta de entrenamiento. EfficientNetB0 de Keras incorpora su propia capa de reescalado; el pipeline entrega píxeles RGB de 0–255 y no añade un segundo reescalado.
 
-```bash
-python src/app.py
-```
+`ModelCheckpoint` y `EarlyStopping` seleccionan por `val_loss`. El conjunto de prueba no participa en ajuste ni selección y se consulta al final una sola vez. La evaluación completa queda guardada como métricas de test en `models/metadata.json`; solo deben compartirse resultados generados por una ejecución real.
 
-## Añadiendo Modelos
+## Artefactos
 
-Para añadir clases de modelos SQLAlchemy, crea nuevos archivos de script de Python dentro del directorio models/. Estas clases deben ser definidas de acuerdo a tu esquema de base de datos.
+- `models/dogs_cats_efficientnetb0.keras`: modelo completo seleccionado.
+- `models/metadata.json`: arquitectura, configuración, historial de validación y métricas finales de test.
+- `models/history.json`: curvas registradas por época.
+- `models/reload_verification.json`: comprobación de equivalencia de predicción al recargar.
+- `data/processed/splits.csv`, `audit.json`, `excluded_files.csv`: manifiesto reproducible y evidencia de auditoría.
 
-Definición del modelo de ejemplo (`models/example_model.py`):
-
-```py
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
-
-Base = declarative_base()
-
-class ExampleModel(Base):
-    __tablename__ = 'example_table'
-    id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(unique=True)
-```
-
-## Trabajando con Datos
-
-Puedes colocar tus conjuntos de datos brutos en el directorio data/raw, conjuntos de datos intermedios en data/interim, y los conjuntos de datos procesados listos para el análisis en data/processed.
-
-Para procesar datos, puedes modificar el script app.py para incluir tus pasos de procesamiento de datos, utilizando pandas para la manipulación y análisis de datos.
-
-## Contribuyentes
-
-Esta plantilla fue construida como parte del [Data Science and Machine Learning Bootcamp](https://4geeksacademy.com/us/coding-bootcamps/datascience-machine-learning) de 4Geeks Academy por [Alejandro Sanchez](https://twitter.com/alesanchezr) y muchos otros contribuyentes. Descubre más sobre [los programas BootCamp de 4Geeks Academy](https://4geeksacademy.com/us/programs) aquí.
-
-Otras plantillas y recursos como este se pueden encontrar en la página de GitHub de la escuela.
+El modelo puede regenerarse con los datos, dependencias y semilla documentados; el artefacto `.keras` y los archivos de datos brutos se excluyen de Git.
