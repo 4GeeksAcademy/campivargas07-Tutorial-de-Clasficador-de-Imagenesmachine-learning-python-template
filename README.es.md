@@ -1,6 +1,15 @@
 # Clasificador de gatos y perros con EfficientNetB0
 
+> **Estado:** la auditoría del dataset y el EDA están ejecutados; el entrenamiento completo sigue pendiente. Aún no hay métricas finales ni un modelo entrenado guardado.
+
 Proyecto reproducible en español para auditar el conjunto de imágenes, explorar sus características y entrenar un clasificador binario con TensorFlow/Keras. El modelo usa **EfficientNetB0 sin pesos preentrenados**, con el backbone entrenable desde el inicio, entradas RGB de **200 × 200** y dos salidas softmax.
+
+## Inicio rápido
+
+1. Prepara el entorno según la sección [Entorno](#entorno).
+2. Coloca los archivos `cat.<id>.jpg` y `dog.<id>.jpg` en `data/raw/dogs-vs-cats/train/`.
+3. Desde la raíz, ejecuta `python src/app.py audit` y revisa el notebook `src/explore.ipynb`.
+4. Para entrenar el modelo y obtener métricas finales, ejecuta `python src/app.py train --batch-size 16 --epochs 30 --seed 42`. En CPU puede tardar muchas horas.
 
 ## Datos y procedencia
 
